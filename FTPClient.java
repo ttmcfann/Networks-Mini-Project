@@ -47,8 +47,8 @@ public class FTPClient {
 				System.out.println("Your Command Options are: ");
 				System.out.println("1: LIST");
 				System.out.println("2: CHANGEDIR");
-				System.out.println("3: DOWNLOAD Files (Both ASCI and binary)");
-				System.out.println("4: UPLOAD Files from Server (Both ASCI and binary)");
+				System.out.println("3: Upload Files (Both ASCI and binary)");
+				System.out.println("4: Download Files from Server (Both ASCI and binary)");
 				System.out.println("4: EXIT");
 				
 			   String command = inFromUser.readLine();
@@ -81,26 +81,16 @@ public class FTPClient {
 				    break;
 				    
 				  case "3": 
-				    System.out.print("Enter file name: ");
-				    fileName = inFromUser.readLine();
-					File f = new File(fileName);
-					if(!f.exists()) {
-						System.out.println(fileName + " does not exist!");
-					} else {
-						System.out.println("file exists");
-						//First send the command as 1 
-						outToServer.write("3\n".getBytes());
-						//Now send the file name
-						outToServer.write((fileName + "\n").getBytes());
-						//Finally send the file content
-						sendFile(fileName, clientSocket);
-						System.out.println(fileName + " uploaded successfully.");
-					}
-				
-				
+				  System.out.print("Enter file name to upload: ");
+				  fileName = inFromUser.readLine();
+				  outToServer.write("3\n".getBytes());
+				  outToServer.write((fileName + "\n").getBytes());
+				  sendFile(clientSocket, fileName);
+				  System.out.println("File uploaded!");
+					
 					break;
 				  case "4":
-					System.out.print("Enter file name: ");
+					System.out.print("Enter file name to download: ");
 					fileName = inFromUser.readLine();
 					outToServer.write("4\n".getBytes());
 					outToServer.write((fileName + "\n").getBytes());
@@ -127,16 +117,30 @@ public class FTPClient {
 		
 	}
 	
-	public static void sendFile(String file, Socket s) throws IOException {
-		DataOutputStream dos = new DataOutputStream(s.getOutputStream());
-		FileInputStream fis = new FileInputStream(file);
-		byte[] buffer = new byte[4096];
-		
-		while (fis.read(buffer) > 0) {
-			dos.write(buffer);
+	private static void sendFile(Socket clientSock, String fileName) throws IOException
+	{
+		FileInputStream fis = null; 
+		BufferedInputStream bis = null; 
+		OutputStream os = null; 
+		Socket sock = null; 
+		try 
+		{
+			File myFile = new File(fileName).getAbsoluteFile();
+			byte [] mybytearray = new byte [(int)myFile.length()];
+			fis = new FileInputStream(myFile);
+			bis = new BufferedInputStream(fis);
+			bis.read(mybytearray, 0, mybytearray.length);
+			os = clientSock.getOutputStream();
+			os.write(mybytearray, 0, mybytearray.length);
+			os.flush();
+			System.out.println("Done.");
 		}
 		
-		fis.close();
+		finally {
+			if (bis != null) bis.close();
+            if (os != null) os.close();
+            if (sock!=null) sock.close();
+		}
 	}
 	
 	public static void saveFile(String file, Socket s, DataOutputStream outToServer) throws IOException {

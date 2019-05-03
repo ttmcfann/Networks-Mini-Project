@@ -59,7 +59,7 @@ public class FTPServer {
 					else if (command.equals("3")) {
 						String fileName = inFromClient.readLine();
 
-						saveFile(connectionSocket, fileName);
+						saveFile(fileName, connectionSocket, outToClient );
 					}
 					else if (command.equals("4")) {
 						String fileName = inFromClient.readLine();
@@ -115,27 +115,44 @@ public class FTPServer {
 		
 	}
 	
-	private static void saveFile(Socket clientSock, String fileName) throws IOException {
-		// "C:\\Users\\Thomas McFann\\eclipse-workspace\\CSCI361MiniProject\\serverData\\" 
-		DataInputStream dis = new DataInputStream(clientSock.getInputStream());
-		File file = new File(fileName).getAbsoluteFile();
-		//Server data is sent to serverData folder
-		FileOutputStream fos = new FileOutputStream("C:\\Users\\Thomas McFann\\eclipse-workspace\\CSCI361MiniProject2\\Server\\" + fileName);
-		byte[] buffer = new byte[4096];
+	public static void saveFile(String file, Socket s, DataOutputStream outToClient) throws IOException {
+		final int FILE_SIZE = 6022386;
+		int bytesRead; 
+		int current = 0; 
+		FileOutputStream fos = null; 
+		BufferedOutputStream bos = null; 
+		String FILE_TO_RECEIVED = "C:\\Users\\Thomas McFann\\eclipse-workspace\\CSCI361MiniProject2\\Server\\" + file;
+		Socket sock = null; 
+		try {
+			outToClient.write((file + "\n").getBytes());
+			byte [] mybytearray  = new byte [FILE_SIZE];
+		    InputStream is = s.getInputStream();
+		    fos = new FileOutputStream(FILE_TO_RECEIVED);
+		    bos = new BufferedOutputStream(fos);
+		    bytesRead = is.read(mybytearray,0,mybytearray.length);
+		    current = bytesRead;
+
+		    do {
+		         bytesRead =
+		            is.read(mybytearray, current, (mybytearray.length-current));
+		         if(bytesRead >= 0) current += bytesRead;
+		      } while(bytesRead > -1);
+		      bos.write(mybytearray, 0 , current);
+		      bos.flush();
+		      
+		    }
 		
-		int filesize = 15123; 
-		int read = 0; 
-		int totalRead = 0; 
-		int remaining = filesize; 
-		while((read = dis.read(buffer, 0 , Math.min(buffer.length, remaining))) > 0) {
-			totalRead += read; 
-			remaining -= read; 
-			fos.write(buffer, 0, read);
+		finally {
+			if (fos != null) fos.close();
+		    if (bos != null) bos.close();
+		    if (sock != null) sock.close();
 		}
-		fos.close();
+		
+
 	}
 	
-	private static void sendFile(Socket clientSock, String fileName) throws IOException
+	
+	private static void sendFile(Socket connectionSocket, String fileName) throws IOException
 	{
 		FileInputStream fis = null; 
 		BufferedInputStream bis = null; 
@@ -148,7 +165,7 @@ public class FTPServer {
 			fis = new FileInputStream(myFile);
 			bis = new BufferedInputStream(fis);
 			bis.read(mybytearray, 0, mybytearray.length);
-			os = clientSock.getOutputStream();
+			os = connectionSocket.getOutputStream();
 			os.write(mybytearray, 0, mybytearray.length);
 			os.flush();
 			System.out.println("Done.");
