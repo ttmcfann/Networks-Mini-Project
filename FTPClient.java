@@ -47,7 +47,8 @@ public class FTPClient {
 				System.out.println("Your Command Options are: ");
 				System.out.println("1: LIST");
 				System.out.println("2: CHANGEDIR");
-				System.out.println("3: UPLOAD Files (Both ASCI and binary)");
+				System.out.println("3: DOWNLOAD Files (Both ASCI and binary)");
+				System.out.println("4: UPLOAD Files from Server (Both ASCI and binary)");
 				System.out.println("4: EXIT");
 				
 			   String command = inFromUser.readLine();
